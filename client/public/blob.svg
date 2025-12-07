@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="blobGrad" cx="40%" cy="40%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </radialGradient>
+  </defs>
+  <!-- Body -->
+  <circle cx="50" cy="50" r="40" fill="url(#blobGrad)"/>
+  <!-- Left eye -->
+  <circle cx="38" cy="45" r="10" fill="white"/>
+  <circle cx="40" cy="45" r="4" fill="#1f2937"/>
+  <!-- Right eye -->
+  <circle cx="62" cy="45" r="10" fill="white"/>
+  <circle cx="64" cy="45" r="4" fill="#1f2937"/>
+  <!-- Blush -->
+  <ellipse cx="25" cy="55" rx="6" ry="4" fill="rgba(244,114,182,0.4)"/>
+  <ellipse cx="75" cy="55" rx="6" ry="4" fill="rgba(244,114,182,0.4)"/>
+  <!-- Mouth -->
+  <path d="M 42 62 Q 50 70 58 62" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round"/>
+</svg>
