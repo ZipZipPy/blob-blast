@@ -2,7 +2,7 @@
 
 A cute 2-player arena shooter game with remote play support!
 
-![Blob Blast](client/public/blob.svg)
+<img src="client/public/blob.svg" alt="Blob Blast" width="100">
 
 ## Features
 
