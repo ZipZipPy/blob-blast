@@ -1,6 +1,0 @@
-[build]
-builder = "nixpacks"
-watchPatterns = ["server/**"]
-
-[deploy]
-startCommand = "cd server && npm install && npm start"
