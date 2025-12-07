@@ -105,6 +105,10 @@ function handleGameOver(data) {
   const opponentScore = isHost ? data.scores.player2 : data.scores.player1;
   const won = data.winner === socket.getId();
 
+  // Update emojis based on who we are (left side = you, right side = opponent)
+  document.getElementById('final-emoji-1').textContent = isHost ? '🟣' : '🔵';
+  document.getElementById('final-emoji-2').textContent = isHost ? '🔵' : '🟣';
+
   // Update UI
   resultText.textContent = won ? '🎉 You Win!' : '😢 You Lose!';
   resultText.className = 'game-result ' + (won ? 'win' : 'lose');
