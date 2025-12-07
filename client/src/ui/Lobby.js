@@ -62,6 +62,7 @@ export class Lobby {
     createRoom() {
         this.hideError();
         this.disableButtons();
+        this.isHost = true; // Player who creates the room is the host
 
         this.socket.createRoom((data) => {
             if (data.success) {
@@ -69,6 +70,7 @@ export class Lobby {
             } else {
                 this.showError(data.error || 'Failed to create room');
                 this.enableButtons();
+                this.isHost = false;
             }
         });
     }
@@ -83,6 +85,7 @@ export class Lobby {
 
         this.hideError();
         this.disableButtons();
+        this.isHost = false; // Player who joins is not the host
 
         this.socket.joinRoom(roomCode, (data) => {
             if (data.success) {
@@ -131,8 +134,8 @@ export class Lobby {
         this.gameScreen.classList.add('active');
         this.gameRoomCode.textContent = data.roomCode;
 
-        // Call the game start callback
-        this.onGameStart(data);
+        // Call the game start callback with isHost info
+        this.onGameStart({ ...data, isHost: this.isHost });
     }
 
     returnToLobby() {

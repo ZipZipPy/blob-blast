@@ -11,6 +11,7 @@ const socket = new Socket();
 
 // Game instance
 let game = null;
+let isHost = false; // Track if this player is the host (created the room)
 
 // Set up global socket listeners (only once)
 socket.onGameRestart((data) => {
@@ -18,6 +19,11 @@ socket.onGameRestart((data) => {
 
   document.getElementById('game-over').classList.remove('active');
   document.getElementById('game-screen').classList.add('active');
+
+  // Reset Play Again button for both players
+  const btn = document.getElementById('play-again-btn');
+  btn.innerHTML = '<span class="btn-icon">🔄</span> Play Again';
+  btn.disabled = false;
 
   if (game) {
     // Reset game state completely
@@ -27,18 +33,25 @@ socket.onGameRestart((data) => {
 });
 
 socket.onRematchPending(() => {
-  // Show waiting for opponent message on Play Again button
+  // Other player wants rematch - show message but keep button enabled
   const btn = document.getElementById('play-again-btn');
-  btn.innerHTML = '<span class="btn-icon">⏳</span> Waiting for opponent...';
-  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-icon">✅</span> Accept Rematch';
+  // Don't disable - let this player click to accept
 });
 
 // Initialize lobby with game start callback
 const lobby = new Lobby(socket, (data) => {
+  // Determine if this player is the host based on room creation
+  isHost = data.isHost || false;
+
   // Create game instance
   const canvas = document.getElementById('game-canvas');
   game = new Game(canvas, socket);
   game.setLocalPlayer(socket.getId());
+  game.setIsHost(isHost);
+
+  // Update HUD to show correct player colors/labels
+  updateHUDForPlayer(isHost);
 
   // IMPORTANT: Set up listeners BEFORE starting the game to avoid missing early state updates
   // Listen for game state updates
@@ -55,6 +68,26 @@ const lobby = new Lobby(socket, (data) => {
   game.start();
 });
 
+// Update HUD labels based on whether player is host or joiner
+function updateHUDForPlayer(isHost) {
+  const player1Section = document.querySelector('.player1-score');
+  const player2Section = document.querySelector('.player2-score');
+
+  if (isHost) {
+    // Host is purple (left side) - already correct in HTML
+    player1Section.querySelector('.player-blob').textContent = '🟣';
+    player1Section.querySelector('.score-label').textContent = 'You';
+    player2Section.querySelector('.player-blob').textContent = '🔵';
+    player2Section.querySelector('.score-label').textContent = 'Opponent';
+  } else {
+    // Joiner is blue - swap the display
+    player1Section.querySelector('.player-blob').textContent = '🔵';
+    player1Section.querySelector('.score-label').textContent = 'You';
+    player2Section.querySelector('.player-blob').textContent = '🟣';
+    player2Section.querySelector('.score-label').textContent = 'Opponent';
+  }
+}
+
 // Game over handling
 function handleGameOver(data) {
   if (game) {
@@ -67,16 +100,15 @@ function handleGameOver(data) {
   const finalScore1 = document.getElementById('final-score-1');
   const finalScore2 = document.getElementById('final-score-2');
 
-  // Determine if local player won
-  const localPlayerNum = game.getLocalPlayerNumber();
-  const localScore = localPlayerNum === 1 ? data.scores.player1 : data.scores.player2;
-  const opponentScore = localPlayerNum === 1 ? data.scores.player2 : data.scores.player1;
+  // Calculate scores based on who this player is
+  const myScore = isHost ? data.scores.player1 : data.scores.player2;
+  const opponentScore = isHost ? data.scores.player2 : data.scores.player1;
   const won = data.winner === socket.getId();
 
   // Update UI
   resultText.textContent = won ? '🎉 You Win!' : '😢 You Lose!';
   resultText.className = 'game-result ' + (won ? 'win' : 'lose');
-  finalScore1.textContent = localScore;
+  finalScore1.textContent = myScore;
   finalScore2.textContent = opponentScore;
 
   // Reset Play Again button
@@ -91,6 +123,11 @@ function handleGameOver(data) {
 
 // Play again button
 document.getElementById('play-again-btn').addEventListener('click', () => {
+  // Disable button and show waiting state for the player who clicked
+  const btn = document.getElementById('play-again-btn');
+  btn.innerHTML = '<span class="btn-icon">⏳</span> Waiting for opponent...';
+  btn.disabled = true;
+
   socket.emit('playAgain');
 });
 
@@ -103,6 +140,9 @@ document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
   const btn = document.getElementById('play-again-btn');
   btn.innerHTML = '<span class="btn-icon">🔄</span> Play Again';
   btn.disabled = false;
+
+  // Reset host status
+  isHost = false;
 });
 
 console.log('🎮 Blob Blast loaded!');

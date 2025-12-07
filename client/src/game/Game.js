@@ -92,6 +92,10 @@ export class Game {
         this.localPlayerId = playerId;
     }
 
+    setIsHost(isHost) {
+        this.isHost = isHost;
+    }
+
     updateGameState(state) {
         if (state.players) {
             this.players = state.players;
@@ -106,8 +110,9 @@ export class Game {
     }
 
     updateScoreUI() {
-        const localPlayerNum = this.getLocalPlayerNumber();
-        if (localPlayerNum === 1) {
+        // Use isHost to determine which score is yours
+        // Host = player1, Joiner = player2
+        if (this.isHost) {
             document.getElementById('player1-score').textContent = this.scores.player1;
             document.getElementById('player2-score').textContent = this.scores.player2;
         } else {
