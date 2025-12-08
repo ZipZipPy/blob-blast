@@ -13,7 +13,7 @@ const socket = new Socket();
 let game = null;
 let isHost = false; // Track if this player is the host (created the room)
 
-// Set up global socket listeners (only once)
+// Set up global socket listeners (only once - to avoid listener accumulation)
 socket.onGameRestart((data) => {
   console.log('Game restart received', data);
 
@@ -39,10 +39,28 @@ socket.onRematchPending(() => {
   // Don't disable - let this player click to accept
 });
 
+// Set up game state and game over listeners ONCE at the top level
+// This prevents listener accumulation when starting new games from lobby
+socket.onGameState((state) => {
+  if (game) {
+    game.updateGameState(state);
+  }
+});
+
+socket.onGameOver((data) => {
+  handleGameOver(data);
+});
+
 // Initialize lobby with game start callback
 const lobby = new Lobby(socket, (data) => {
   // Determine if this player is the host based on room creation
   isHost = data.isHost || false;
+
+  // Stop and reset any existing game before creating a new one
+  if (game) {
+    game.stop();
+    game.reset();
+  }
 
   // Create game instance
   const canvas = document.getElementById('game-canvas');
@@ -53,18 +71,7 @@ const lobby = new Lobby(socket, (data) => {
   // Update HUD to show correct player colors/labels
   updateHUDForPlayer(isHost);
 
-  // IMPORTANT: Set up listeners BEFORE starting the game to avoid missing early state updates
-  // Listen for game state updates
-  socket.onGameState((state) => {
-    game.updateGameState(state);
-  });
-
-  // Listen for game over
-  socket.onGameOver((data) => {
-    handleGameOver(data);
-  });
-
-  // Start game AFTER listeners are set up
+  // Start game - listeners are already set up at top level
   game.start();
 });
 
@@ -137,6 +144,13 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
 
 // Back to lobby button
 document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
+  // Stop and reset game before returning to lobby
+  // This ensures bullet positions and other state are cleared
+  if (game) {
+    game.stop();
+    game.reset();
+  }
+
   lobby.returnToLobby();
   socket.emit('leaveRoom');
 
